@@ -1,0 +1,45 @@
+{
+  "TELEGRAM_TOKEN": "7836128954:AAGKYbv5w431lC5TCYRtiOimEocF1_anzn8",
+  "MAX_FILE_SIZE_MB": 100,
+  "MAX_REQUESTS_PER_MINUTE": 30,
+  "DEFAULT_QUALITY": "best",
+  "ENABLE_AI": true,
+  "ENABLE_PERFORMANCE_MONITORING": true,
+  "LOG_LEVEL": "INFO",
+  "AUTO_CLEANUP_HOURS": 24,
+  "SUPPORTED_FORMATS": [".mp4", ".mp3", ".avi", ".mkv", ".wav", ".m4a", ".webm", ".mov", ".flac", ".ogg"],
+  "DOWNLOAD_TIMEOUT": 300,
+  "AI_CONFIG": {
+    "default_provider": "google",
+    "default_model": "gemini-2.0-flash",
+    "max_context_length": 4000,
+    "temperature": 0.7,
+    "enable_memory": true,
+    "memory_window_size": 10
+  },
+  "FEATURES": {
+    "bulk_download": true,
+    "playlist_support": true,
+    "video_editing": true,
+    "image_processing": true,
+    "file_conversion": true,
+    "compression": true,
+    "watermark": true,
+    "thumbnail_generation": true
+  },
+  "QUALITY_PRESETS": {
+    "ultra": "8k",
+    "high": "1080p",
+    "medium": "720p", 
+    "low": "480p",
+    "audio_high": "320kbps",
+    "audio_medium": "192kbps"
+  },
+  "SYSTEM_SETTINGS": {
+    "max_concurrent_downloads": 3,
+    "cleanup_interval_hours": 1,
+    "resource_monitoring": true,
+    "error_reporting": true,
+    "performance_logging": true
+  }
+}

@@ -1,0 +1,150 @@
+
+✅ خريطة التحديثات الجديدة (Pro AI System):
+
+1. ملف سكربت التعليمات AI (Agent Instruction Script):
+
+هذا ملف مهم جدًا، يخبر الذكاء كيف يتكلم ويتصرف:
+
+# تعليمات الذكاء الاصطناعي للبوت الذكي:
+
+أنت وكيل ذكي جدًا داخل بوت تيليجرام. مهمتك تنفيذ طلبات الوسائط المتعددة بدقة وذكاء. عندما يرسل المستخدم رابط فيديو، اتبع الخطوات:
+
+1. افحص الرابط: هل هو فيديو أو صوت؟ حدده.
+2. إذا كان فيديو:
+   - قدم للمستخدم قائمة من الجودات المتوفرة (مثال: 1080p, 720p, 480p).
+   - اطلب منه اختيار الجودة، بطريقة محترمة وذكية.
+   - بعد اختياره، أخبره أن التحميل بدأ.
+   - بعد الانتهاء، أرسل له الفيديو برسالة لطيفة وجميلة.
+
+3. إذا كان طلب صوت:
+   - قدم له خيار الصيغ: MP3 أو M4A.
+   - بعد الاختيار، نفذ التنزيل وأرسل الملف.
+
+4. إذا طلب معلومات:
+   - أرسل له عنوان الفيديو، المدة، وعدد المشاهدات.
+
+✅ تكلّم دائمًا بلغة أنيقة واحترافية. لا تستخدم كلام ممل أو روبوتي.
+
+مثال رد:
+"✨ تم التعرف على الفيديو، اختر الجودة التي تفضلها للتنزيل:
+🔹 1080p
+🔹 720p
+🔹 480p
+أرسل رقم الجودة أو اضغط على الزر المناسب."
+
+بعد التحميل:
+"🎉 تم تحميل الفيديو بنجاح! ها هو الملف كما طلبت، استمتع! 🎥"
+
+
+⸻
+
+✅ سكربت 1: استخراج الجودات من فيديو وإرسال قائمة ذكية
+
+from yt_dlp import YoutubeDL
+from telebot import TeleBot, types
+
+bot = TeleBot("YOUR_TELEGRAM_BOT_TOKEN")
+
+def extract_formats(url):
+    ydl_opts = {'quiet': True, 'skip_download': True}
+    with YoutubeDL(ydl_opts) as ydl:
+        info = ydl.extract_info(url, download=False)
+        formats = []
+        for f in info['formats']:
+            if f.get('vcodec') != 'none':  # فيديو فقط
+                formats.append((f['format_id'], f['format_note'], f['ext']))
+        return formats, info.get('title', 'Video')
+
+@bot.message_handler(commands=['start'])
+def start(msg):
+    bot.send_message(msg.chat.id, "🎬 أرسل رابط فيديو لأبدأ التنزيل الذكي!")
+
+@bot.message_handler(func=lambda msg: msg.text.startswith('http'))
+def handle_video(msg):
+    url = msg.text.strip()
+    bot.send_message(msg.chat.id, "🔍 جاري تحليل الفيديو...")
+    try:
+        formats, title = extract_formats(url)
+        markup = types.ReplyKeyboardMarkup(one_time_keyboard=True, resize_keyboard=True)
+        text = f"🎞️ **العنوان**: {title}\n\nاختر الجودة التي ترغب بها:"
+        for f_id, note, ext in formats[-5:]:
+            btn_text = f"{note} - {ext}"
+            markup.add(types.KeyboardButton(btn_text))
+        bot.send_message(msg.chat.id, text, reply_markup=markup, parse_mode='Markdown')
+        # احفظ الرابط مؤقتًا في ذاكرة
+        bot.register_next_step_handler(msg, lambda m: download_selected_quality(m, url, formats))
+    except Exception as e:
+        bot.send_message(msg.chat.id, f"❌ فشل التحليل: {e}")
+
+def download_selected_quality(msg, url, formats):
+    selected = msg.text.strip()
+    # تحديد الفورمات المناسب
+    for f_id, note, ext in formats:
+        if selected.startswith(note):
+            bot.send_message(msg.chat.id, f"⏬ جاري تحميل الفيديو بجودة {note}...")
+            ydl_opts = {
+                'format': f_id,
+                'outtmpl': 'downloaded.%(ext)s'
+            }
+            with YoutubeDL(ydl_opts) as ydl:
+                ydl.download([url])
+            with open("downloaded." + ext, 'rb') as f:
+                bot.send_video(msg.chat.id, f, caption="✅ تم التحميل بنجاح!")
+            return
+    bot.send_message(msg.chat.id, "❌ لم أتعرف على الجودة المختارة.")
+
+
+⸻
+
+✅ سكربت 2: دمج LangChain ليقرر ويستخدم أدواتك
+
+from langchain.chat_models import ChatOpenAI
+from langchain.tools import Tool
+from langchain.agents import initialize_agent, AgentType
+
+llm = ChatOpenAI(model="gpt-3.5-turbo", openai_api_key="YOUR_API_KEY")
+
+# أدواتك
+def download_video_tool(url: str) -> str:
+    import subprocess
+    subprocess.run(["yt-dlp", url])
+    return f"✅ تم تحميل الفيديو من {url}"
+
+tool_yt = Tool.from_function(
+    func=download_video_tool,
+    name="VideoDownloader",
+    description="تحميل الفيديوهات من أي رابط"
+)
+
+tools = [tool_yt]
+
+agent = initialize_agent(
+    tools=tools,
+    llm=llm,
+    agent=AgentType.ZERO_SHOT_REACT_DESCRIPTION,
+    verbose=True
+)
+
+# تشغيل الذكاء في بوتك
+@bot.message_handler(commands=['ai'])
+def ai_mode(msg):
+    bot.send_message(msg.chat.id, "🧠 تفضل، أرسل طلبك الذكي...")
+    bot.register_next_step_handler(msg, process_ai_request)
+
+def process_ai_request(msg):
+    reply = agent.run(msg.text)
+    bot.send_message(msg.chat.id, reply)
+
+
+⸻
+
+✅ ماذا بقي؟
+	•	واجهات تفاعل احترافية (Inline Buttons).
+	•	أداة ضغط وفك.
+	•	سجل ذاكرة للذكاء.
+	•	تكامل مع GPT أو ذكاء محلي.
+	•	وحدة تعليمات AI (ai_instructions.md).
+	•	واجهة اختيار تحويل الفيديو إلى صوت.
+
+⸻
+
